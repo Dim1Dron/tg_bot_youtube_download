@@ -1,12 +1,13 @@
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from pytube import YouTube
+import pytube
 from aiogram.types import Video
 import os
 
 
 # Создаем объект бота
-bot = Bot('6994323466:AAFcpEnwlkyE1SZ_Goq5I_C9PCS8nBqC6FI')
+bot = Bot('7183909269:AAEazXr_hJi6Yr-64qHZrfg4ATEsiyFMYY0')
 dp = Dispatcher(bot)
 
 # Функция при запуске бота
@@ -30,23 +31,27 @@ async def cmd_download(message: types.Message):
 async def process_video_link(message: types.Message):
     global link
     link = message.text
-    yt = YouTube(message.text)
-    kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    
-    # Создаем множество для хранения уникальных разрешений и форматов с аудио
-    unique_formats_with_audio = set()
-    
-    # Итерируемся по каждому потоку видео и добавляем уникальные разрешения и форматы с аудио
-    for stream in yt.streams:
-        if stream.resolution and stream.includes_audio_track:
-            data = f'{stream.resolution} | {stream.mime_type}'
-            unique_formats_with_audio.add(data)
-    
-    # Добавляем уникальные разрешения и форматы с аудио на клавиатуру
-    for format_data in unique_formats_with_audio:
-        kb.add(KeyboardButton(format_data))
-    
-    await message.answer("Выберите разрешение с работающим звуком:", reply_markup=kb)
+    try:
+        yt = YouTube(message.text)
+        kb = ReplyKeyboardMarkup(resize_keyboard=True)
+        
+        # Создаем множество для хранения уникальных разрешений и форматов с аудио
+        unique_formats_with_audio = set()
+        
+        # Итерируемся по каждому потоку видео и добавляем уникальные разрешения и форматы с аудио
+        for stream in yt.streams:
+            if stream.resolution and stream.includes_audio_track:
+                data = f'{stream.resolution} | {stream.mime_type}'
+                unique_formats_with_audio.add(data)
+        
+        # Добавляем уникальные разрешения и форматы с аудио на клавиатуру
+        for format_data in unique_formats_with_audio:
+            kb.add(KeyboardButton(format_data))
+        
+        await message.answer("Выберите разрешение с работающим звуком:", reply_markup=kb)
+    except pytube.exceptions.AgeRestrictedError:
+        await message.answer("К сожалению, это видео имеет ограничение по возрасту и не может быть скачано.")
+        return
 
 # Обработчик текстовых сообщений с разрешениями
 @dp.message_handler(lambda message: message.text and '|' in message.text)
